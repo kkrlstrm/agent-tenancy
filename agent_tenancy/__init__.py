@@ -1,12 +1,12 @@
 # Copyright 2026 Kai Karlstrom
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """
-agent-tenancy — compile-time tenant binding for multi-tenant agents.
+agent-tenancy — keep tenant routing out of the model.
 
-Turn per-tenant wiring (which repo, which DB, which channel) into a generated registry
-of provenance-stamped bindings, and reach each tenant's resources through capabilities
-that are structurally scoped — so an agent never constructs an id and never can touch the
-wrong tenant.
+Turn per-tenant wiring (which repo, which DB, which channel) into a generated registry of
+provenance-stamped bindings, and reach each tenant's resources through tenant-scoped
+capabilities minted before the agent runs — so the model sees content-only operations and
+can't redirect a scoped capability to another tenant.
 """
 from . import capability, generate, providers, registry, resolvers  # noqa: F401
 from .capability import Capability

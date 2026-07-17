@@ -83,8 +83,8 @@ def cmd_verify(args) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="tenancy",
-        description="Compile-time tenant binding for multi-tenant agents: a generated, "
-                    "provenance-stamped registry + structurally-scoped capabilities.")
+        description="Keep tenant routing out of the model: a generated, provenance-stamped "
+                    "tenant registry + structurally-scoped capabilities for agent runtimes.")
     p.add_argument("--version", action="version", version=f"agent-tenancy {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
 

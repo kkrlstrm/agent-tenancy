@@ -1,58 +1,78 @@
 # agent-tenancy
 
-> **Compile-time tenant binding for multi-tenant agents.**
-> A generated, provenance-stamped registry + structurally-scoped capabilities — so an
-> agent never constructs an id, and never can touch the wrong tenant.
+> **Keep tenant routing out of the model.**
+> Resolve the tenant *before* the agent runs, then hand it capabilities that expose
+> content-level operations only — no tenant id, repo, namespace, or connection string for
+> the model to choose or hallucinate.
 
-If you run one agent across many tenants — clients, workspaces, orgs — you have a wiring
-problem: *which* repo, *which* database, *which* channel is this tenant's? The common
-answer is to stuff the ids into the prompt ("you are working on Acme, project 4172,
-channel C08…") and let the model plug them into tool calls at runtime. That does two bad
-things: it leaks tenant context across a long session, and it asks the LLM to do
-**symbolic id/url reasoning** — exactly the thing it hallucinates.
+`agent-tenancy` is a tenant-binding and capability-scoping layer for multi-tenant agent
+runtimes. It generates a verified registry of each tenant's resource bindings — which
+repo, which database, which channel, which credential — then turns those bindings into
+**tenant-scoped capabilities** minted before an agent enters the loop.
 
-`agent-tenancy` moves that binding out of the prompt and into generated, typed code:
+The model never constructs a tenant id, a repository path, a namespace, an account URL,
+or a connection string. It sees content-level operations like `get("welcome")`;
+deterministic code owns the resource routing.
 
-- **A registry** maps each tenant → its binding targets, **generated** from your sources
-  of truth (not hand-maintained), with every binding stamped with where it came from and
-  whether it still verifies.
-- **Capabilities** turn a tenant's binding into a **scoped handle** whose methods take
-  only content (`get("welcome")`), never a tenant or a path. The id/url is computed in
-  plain code; the model just names an intent.
-- **Isolation is structural.** A handle scoped to Acme has no argument through which to
-  address Globex. Cross-tenant access isn't blocked by a check you could forget — it's
-  unreachable by construction.
-
-```console
-$ tenancy show acme -r tenants.generated.json
-tenant: acme
-  ✓ docs_store     'acme'
-    └ verified · resolver markdown-frontmatter · source examples/tenants/acme/tenant.md verified 2026-07-17
-  ✓ api_token_env  'ACME_API_TOKEN'
-    └ verified · resolver env-var · source env:ACME_API_TOKEN verified 2026-07-17
+```python
+acme = docs.for_tenant(tenant("acme", registry))
+acme.get("welcome")
+# No tenant, repository, namespace, or path selector is exposed on the handle.
 ```
+
+**Deterministic tenant routing. Probabilistic content generation.**
 
 ---
 
-## Why this shape
+## The move, in one contrast
 
-Three commitments, each borrowed from how funded AI-infra runtimes are actually built
-(see [Design lineage](#design-lineage)):
+```
+Generic agent tenancy
+  prompt ──▶ model picks tenant id / repo / namespace / creds ──▶ generic tools ──▶ shared infra
+             └─ symbolic id reasoning by a probabilistic model: hallucination + leakage risk
 
-**1. Deterministic wiring, not model-constructed wiring.** The caller (often an LLM)
-names an intent — "read this doc", "get the token". It never assembles a project id, a
-`%2F`-encoded path, or a connection string. Those are computed from the tenant binding in
-typed code, where they can't be hallucinated.
+agent-tenancy
+  tenant resolved deterministically ──▶ scoped capabilities minted ──▶ model sees content-only ops
+             └─ the model is never a participant in tenant routing
+```
 
-**2. Structural isolation, not policy isolation.** `for_tenant(t)` captures tenant `t`'s
-binding and hands back a handle that can reach `t`'s resources and no other — because its
-methods expose no tenant/namespace/path parameter, and keys are sanitized so you can't
-traverse out. "We architecturally cannot" beats "we promise not to."
+This removes two recurring risks in multi-tenant agent systems:
 
-**3. Definition / execution split.** A `Tenant` is a frozen config record — zero-cost at
-rest, and its bindings map is read-only so the definition can't drift under you. Any
-per-run state lives in the ephemeral scoped handle, minted fresh per call. The reusable
-definition and the throwaway execution are different objects.
+- **Misdirection** — the model can't substitute or hallucinate another tenant's
+  identifier through a scoped interface, because the interface has no identifier argument.
+- **Context leakage** — tenant wiring doesn't have to be repeated through prompts and tool
+  calls, so it can't drift or bleed across a long session.
+
+## The problem
+
+Most multi-tenant systems assume *deterministic application code* constructs resource
+identifiers. Agent systems often do the opposite: they hand a **probabilistic model** the
+tenant ids, repo names, database namespaces, channel ids, and credential references as
+prompt text and tool arguments, and ask it to plug them into calls at runtime. That is
+exactly the symbolic id/url reasoning LLMs are worst at — and every id in the prompt is
+another thing that can be hallucinated or leak between tenants.
+
+## The architectural move
+
+1. **Resolve the tenant first** — from your sources of truth, into a generated registry of
+   provenance-stamped bindings, optionally verified against the real systems.
+2. **Mint a scoped capability** — `for_tenant(t)` captures tenant `t`'s binding and returns
+   a handle whose methods take only content (`get("welcome")`), with no tenant/namespace
+   selector.
+3. **Let the model operate on content only** — routing is already decided, in code, before
+   the model runs.
+
+## The guarantee (stated precisely)
+
+After scoping, **the model cannot redirect a correctly-implemented scoped capability to
+another tenant** — there is no tenant, namespace, repo, or path argument on the handle to
+manipulate, and keys are sanitized so a value argument can't smuggle a traversal.
+
+This is a guarantee about the **capability interface**, not a whole-process sandbox. A
+provider you write could still expose an unsafe method, share a misconfigured client, or
+ignore its scope; the process can reach the filesystem or credentials if those are exposed
+separately. What this package makes unrepresentable is *tenant selection through the tool
+surface the agent sees*. That's the boundary — a narrow, real, and load-bearing one.
 
 ## Install
 
@@ -92,13 +112,13 @@ acme.put("welcome", "hello from acme")
 acme.get("welcome")                             # -> 'hello from acme'
 
 globex = store.for_tenant(tenant("globex", reg))
-globex.get("welcome")                           # -> None  (Acme's data is unreachable)
+globex.get("welcome")                           # -> None  (can't reach Acme's data)
 globex.keys()                                   # -> []    (can't even see Acme's keys)
 ```
 
 The caller never names a namespace. There is no argument on `get`/`put`/`keys` through
-which `globex` could read `acme` — that's the guarantee, and it's a passing test, not a
-promise.
+which `globex` could read `acme` — and the test suite asserts that by inspecting the
+method signatures, not just by exercising a runtime check.
 
 ## How it works
 
@@ -116,23 +136,10 @@ on synthetic tenants. **In your own system you write the resolvers that hit your
 and the providers that wrap your services**, and register them the same way — see
 [Bring your own](#bring-your-own).
 
-## The isolation guarantee, precisely
-
-Splitting tenants across a registry is easy; the interesting part is that the *capability*
-can't be talked into crossing the line. Two things enforce it:
-
-- **No selector argument.** A scoped handle's methods take content only (`key`, `value`).
-  The target namespace is captured at `for_tenant()` time from the tenant's binding — it
-  is not a parameter, so there is no way to pass another tenant's.
-- **Sanitized keys.** Keys are validated (`^[A-Za-z0-9._-]+$`, no `..`), so you can't
-  smuggle a traversal (`../globex/...`) through the content argument either.
-
-A tenant whose binding didn't resolve can't even be scoped — `for_tenant()` raises rather
-than hand you a half-bound handle. (`tests/test_capability.py` asserts all of this.)
-
 ## Provenance — why a binding is what it is
 
-A registry that stores only values can't tell you *why* a tenant is misconfigured. Every
+The registry is a **generated artifact with an audit trail**, not a hand-kept config. A
+registry that stores only values can't tell you why a tenant is misconfigured; every
 binding here is a `Binding`, not a bare string:
 
 ```python
@@ -144,10 +151,11 @@ b.status       # 'verified'               ← resolved | verified | missing | un
 b.verified_at  # '2026-07-17'
 ```
 
-Status is a **graded state, not a boolean** — `--verify` upgrades `resolved → verified`
-by checking each binding live (the file still exists, the env var is actually set), and
+Status is a **graded state, not a boolean** — `--verify` upgrades `resolved → verified` by
+checking each binding live (the file still exists, the env var is actually set), and
 demotes to `missing` when it's gone. `tenancy verify` reports every non-usable binding
-across the registry.
+across the registry. The generator discovers, resolves, verifies, and preserves
+provenance — a tenant wiring pipeline, not an injection helper.
 
 ## Secrets stay out of the registry
 
@@ -180,29 +188,44 @@ reg = build_registry(my_sources, [GitLabRepoResolver(), ...], verify=True)
 Nothing about your tenants, services, or credentials lives in this package — only the
 schema, the generator, and the scoping discipline.
 
-## Design lineage
+## Where this fits — an agent control-plane primitive
 
-The shape here isn't invented; it's the convergent practice of several funded AI-infra
-runtimes, applied to tenancy:
+An agent should generate and interpret **content**. It should not be the thing that
+decides which tenant it represents, which credential to use, which repository to access,
+which namespace to query, which policy boundary applies, or where an action executes.
+Those are **control-plane** decisions.
 
-- **Deterministic wiring, model off the control path** — Band routes on `@mention` (no
-  LLM), Bolna evaluates edges deterministically and falls back to a model only on a miss.
-- **Structural isolation over policy** — SurrealDB enforces record-level security in the
-  query planner (not the app); Natural uses server-side hard capability exclusions.
-- **Definition / execution split** — Band models an agent as a config record and a run as
-  a throwaway, state-isolated instance.
-- **Per-attribute provenance** — OpsMill tags every attribute with its source and owner so
-  a misconfiguration is explainable, not mysterious.
+`agent-tenancy` takes one of them — tenant and resource binding — out of the model's hands
+and makes it deterministic, inspectable, and testable. It's a reference architecture for
+putting a deterministic tenant boundary around a probabilistic system, and it composes
+with whatever owns the other control-plane responsibilities.
+
+## Related architectural patterns
+
+The design leans on four established ideas rather than inventing new ones:
+
+- **Capability-based security** — a scoped handle is an unforgeable capability: holding it
+  grants access to exactly one tenant's resources, and there's no ambient way to name
+  another. Authority travels with the handle, not with an argument.
+- **Deterministic control planes** — keep the probabilistic component off the routing
+  path; let it decide content, let code decide addressing.
+- **Immutable definitions** — the tenant record is frozen and its bindings are read-only,
+  so the definition can't drift under a running system; per-run state lives in the
+  ephemeral scoped handle.
+- **Configuration provenance** — every binding records its source and verification status,
+  so a misconfiguration is explainable instead of mysterious.
 
 ## Not in scope
 
-- **It's not an agent framework or an orchestrator.** It's the tenant-binding layer you
-  put *under* one.
+- **It's not an agent framework or orchestrator.** It's the tenant-binding layer you put
+  *under* one.
+- **It's not a generic multi-tenancy platform.** No auth, authorization policy, row-level
+  security, credential lifecycle, workload isolation, provisioning, or billing — it does
+  one thing: bind the tenant and scope the capability.
 - **It doesn't manage secrets.** It records where a secret lives (an env-var name); your
   secret manager owns the value.
-- **Reference resolvers/providers are illustrative.** The markdown/env resolvers and the
-  local-store/env-kv providers demonstrate the pattern on synthetic tenants; production
-  use means writing your own.
+- **Reference resolvers/providers are illustrative.** They demonstrate the pattern on
+  synthetic tenants; production use means writing your own.
 
 ## Testing
 

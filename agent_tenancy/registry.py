@@ -3,21 +3,17 @@
 """
 registry — the immutable tenant *definition* and its provenance-carrying bindings.
 
-Two design commitments live in this file, both borrowed from how funded AI-infra
-companies build multi-tenant runtimes:
+Two design commitments live in this file:
 
-  • Definition / execution split. A Tenant is a frozen config record — zero-cost at
-    rest, never mutated at runtime. Binding resolution and any per-run state happen in
-    the ephemeral scoped handles returned by capabilities (see capability.py), never
-    here. The bindings map is wrapped read-only so the definition genuinely cannot drift
-    under you. (Band builds agents this way: a definition is a record, a run is a
-    throwaway isolated instance.)
+  • Definition / execution split. A Tenant is a frozen config record — zero-cost at rest,
+    never mutated at runtime. Binding resolution and any per-run state happen in the
+    ephemeral scoped handles returned by capabilities (see capability.py), never here. The
+    bindings map is wrapped read-only so the definition can't drift under a running system.
 
-  • Per-binding provenance. Every binding is not a bare string but a `Binding` that
-    knows which resolver produced it, from what source, its verification status, and
-    when it was last verified. A registry that only stores values can't tell you why a
-    tenant is misconfigured; this one can. (OpsMill tags every attribute with source +
-    owner for exactly this reason.)
+  • Per-binding provenance. Every binding is a `Binding`, not a bare string: it knows which
+    resolver produced it, from what source, its verification status, and when it was last
+    verified. A registry that only stores values can't tell you why a tenant is
+    misconfigured; this one can.
 
 Secrets never live in the registry. A binding's *value* is an identifier or an env-var
 NAME — the actual secret is resolved at call time by the capability, so the registry
@@ -31,8 +27,8 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping
 
-# Binding status vocabulary — a graded state, not a boolean (see the deliverability
-# tool's graded verdicts; a registry has the same "more than two outcomes" need).
+# Binding status vocabulary — a graded state, not a boolean: a misconfigured tenant has
+# more than two outcomes ("resolved but unverified" is different from "missing").
 STATUS_RESOLVED = "resolved"          # a value was produced, not verified
 STATUS_VERIFIED = "verified"          # value produced AND checked live (file exists / env set / API 200)
 STATUS_MISSING = "missing"            # resolver ran but could not produce a value

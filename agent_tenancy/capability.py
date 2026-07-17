@@ -1,26 +1,26 @@
 # Copyright 2026 Kai Karlstrom
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """
-capability — the router that turns a tenant binding into a *tenant-scoped* handle.
+capability — turn a tenant binding into a *tenant-scoped* handle.
 
-This is where two of the load-bearing ideas meet:
+Two ideas meet here:
 
-  • Deterministic coordination, probabilistic content. The caller (often an LLM) names
-    an *intent* — "read doc X", "get the token" — and never constructs an id, a path, a
-    namespace, or a URL. The capability computes those from the tenant's binding in
-    plain code. Symbolic wiring is moved out of the model, where it hallucinates, into
-    typed code, where it can't. (Band/Bolna/Lua all keep the model off the control path.)
+  • Deterministic routing, probabilistic content. The caller (often an LLM) names an
+    intent — "get this doc", "read the token" — and never constructs an id, a path, a
+    namespace, or a URL. The capability computes those from the tenant's binding in plain
+    code, moving symbolic wiring out of the model (where it hallucinates) into typed code
+    (where it can't).
 
-  • Structural isolation, not policy isolation. `for_tenant(t)` captures tenant t's
+  • Scoping at the interface, not a policy check. `for_tenant(t)` captures tenant t's
     binding and returns a handle whose methods take ONLY content arguments (a key, a
-    value) — there is no tenant/namespace/path parameter through which a caller could
-    address another tenant. Cross-tenant access isn't forbidden by a check you can
-    forget; it's unreachable by construction. (This is SurrealDB enforcing record-level
-    security in the planner, and Natural's server-side hard capability exclusions:
-    "we architecturally cannot" beats "we promise not to.")
+    value) — no tenant/namespace/path parameter through which a caller could address
+    another tenant. Within a correctly-implemented capability, the model can't redirect it
+    to a different tenant, because the interface exposes nothing to redirect. This is a
+    capability-security guarantee about the tool surface the agent sees — not a
+    whole-process sandbox.
 
 A Capability is a reusable definition, configured once. `for_tenant` mints an ephemeral,
-isolated scoped handle per tenant — the definition/execution split, again.
+isolated scoped handle per tenant — the definition/execution split.
 """
 from __future__ import annotations
 

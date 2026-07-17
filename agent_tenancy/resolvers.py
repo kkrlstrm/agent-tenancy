@@ -10,8 +10,8 @@ framework ships two trivial reference resolvers; you write the ones that hit you
 sources and register them the same way.
 
 `resolve()` produces bindings; `verify()` optionally upgrades a binding's status from
-`resolved` to `verified` (or flags it) by checking it live — the same split the
-governance companies use between "what is known" and "what has been confirmed."
+`resolved` to `verified` (or flags it) by checking it live — the standard split between
+"what is known" and "what has been confirmed."
 """
 from __future__ import annotations
 

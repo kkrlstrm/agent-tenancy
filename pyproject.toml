@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agent-tenancy"
 version = "0.1.0"
-description = "Compile-time tenant binding for multi-tenant agents: a generated, provenance-stamped registry + structurally-scoped capabilities, so an agent never constructs an id and never touches the wrong tenant."
+description = "Keep tenant routing out of the model: generated, provenance-stamped tenant bindings + structurally-scoped capabilities for agent runtimes. The model sees content-only operations; deterministic code owns resource routing."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "AGPL-3.0-or-later" }
