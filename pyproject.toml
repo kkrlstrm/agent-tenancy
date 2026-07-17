@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-tenancy"
+version = "0.1.0"
+description = "Compile-time tenant binding for multi-tenant agents: a generated, provenance-stamped registry + structurally-scoped capabilities, so an agent never constructs an id and never touches the wrong tenant."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Kai Karlstrom" }]
+keywords = ["agents", "multi-tenant", "llm", "agent-infrastructure", "isolation", "registry", "capability"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/kkrlstrm/agent-tenancy"
+Repository = "https://github.com/kkrlstrm/agent-tenancy"
+
+[project.scripts]
+tenancy = "agent_tenancy.cli:main"
+
+[tool.setuptools]
+packages = ["agent_tenancy", "agent_tenancy.providers"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

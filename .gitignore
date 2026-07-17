@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# generated registries (except the committed example)
+tenants.generated.json
+!examples/tenants.generated.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,45 @@
+{
+  "_generated_by": "agent-tenancy",
+  "_note": "Generated artifact \u2014 do not hand-edit; re-run the generator.",
+  "generated_at": "2026-07-17",
+  "tenants": {
+    "acme": {
+      "slug": "acme",
+      "bindings": {
+        "docs_store": {
+          "value": "acme",
+          "resolver": "markdown-frontmatter",
+          "source": "examples/tenants/acme/tenant.md",
+          "status": "resolved",
+          "verified_at": null
+        },
+        "api_token_env": {
+          "value": "ACME_API_TOKEN",
+          "resolver": "env-var",
+          "source": "env:ACME_API_TOKEN",
+          "status": "resolved",
+          "verified_at": null
+        }
+      }
+    },
+    "globex": {
+      "slug": "globex",
+      "bindings": {
+        "docs_store": {
+          "value": "globex",
+          "resolver": "markdown-frontmatter",
+          "source": "examples/tenants/globex/tenant.md",
+          "status": "resolved",
+          "verified_at": null
+        },
+        "api_token_env": {
+          "value": "GLOBEX_API_TOKEN",
+          "resolver": "env-var",
+          "source": "env:GLOBEX_API_TOKEN",
+          "status": "resolved",
+          "verified_at": null
+        }
+      }
+    }
+  }
+}
