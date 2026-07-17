@@ -1,5 +1,5 @@
 # Copyright 2026 Kai Karlstrom
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """The tenant definition is immutable, and every binding carries its provenance."""
 from __future__ import annotations
 

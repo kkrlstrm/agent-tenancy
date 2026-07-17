@@ -1,5 +1,5 @@
 # Copyright 2026 Kai Karlstrom
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 End-to-end demo: generate a registry from the example tenants, then use a capability
 that is structurally scoped to one tenant.

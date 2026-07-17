@@ -8,13 +8,13 @@ version = "0.1.0"
 description = "Compile-time tenant binding for multi-tenant agents: a generated, provenance-stamped registry + structurally-scoped capabilities, so an agent never constructs an id and never touches the wrong tenant."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "Apache-2.0" }
+license = { text = "AGPL-3.0-or-later" }
 authors = [{ name = "Kai Karlstrom" }]
 keywords = ["agents", "multi-tenant", "llm", "agent-infrastructure", "isolation", "registry", "capability"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Programming Language :: Python :: 3",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]

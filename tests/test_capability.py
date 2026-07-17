@@ -1,5 +1,5 @@
 # Copyright 2026 Kai Karlstrom
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """
 Structural isolation: a capability scoped to one tenant cannot reach another — not by a
 check you could forget, but because there is no argument through which to address it.
