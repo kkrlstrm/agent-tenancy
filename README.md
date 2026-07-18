@@ -1,5 +1,8 @@
 # agent-tenancy
 
+<!-- portfolio-status -->
+**Status:** Reference implementation — extracted from a private production GTM system; tenant data, provider adapters, and company-specific policy stay private. · **Layer:** Platform architecture · **[Portfolio map ›](https://github.com/kkrlstrm)**
+
 > **Keep tenant routing out of the model.**
 > Resolve the tenant *before* the agent runs, then hand it capabilities that expose
 > content-level operations only — no tenant id, repo, namespace, or connection string for
@@ -239,3 +242,16 @@ pytest -q
 ## License
 
 GNU AGPL-3.0-or-later — see [LICENSE](LICENSE).
+
+---
+
+<!-- portfolio-footer -->
+## Where this fits
+
+Part of a portfolio of **governed, AI-native GTM systems** — reference implementations and reusable patterns extracted from a private production stack. In that system this is the tenant-binding + capability-scoping layer the whole stack sits on.
+
+**Full portfolio map → [github.com/kkrlstrm](https://github.com/kkrlstrm)**
+
+Works with:
+- [knowledge-graph-governance](https://github.com/kkrlstrm/knowledge-graph-governance) — governs writes within a tenant's scope
+- [model-eval-gate](https://github.com/kkrlstrm/model-eval-gate) — governs model egress within the runtime
