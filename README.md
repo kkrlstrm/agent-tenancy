@@ -1,7 +1,7 @@
 # agent-tenancy
 
 <!-- portfolio-status -->
-**Status:** Reference implementation — extracted from a private production GTM system; tenant data, provider adapters, and company-specific policy stay private. · **Layer:** Platform architecture · **[Portfolio map ›](https://github.com/kkrlstrm)**
+**Status:** Reference implementation — extracted from a private internal GTM platform in production use; tenant data, provider adapters, and company-specific policy stay private. · **Layer:** Catalog and tenancy · **[Portfolio map ›](https://github.com/kkrlstrm)**
 
 > **Keep tenant routing out of the model.**
 > Resolve the tenant *before* the agent runs, then hand it capabilities that expose
